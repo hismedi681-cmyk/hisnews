@@ -1,0 +1,23 @@
+name: TID_Daily_Pipeline
+on:
+  schedule:
+    - cron: '0 0 * * *' # 매일 자정 실행
+  workflow_dispatch:
+
+jobs:
+  run-tid:
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+      GSHEET_ID: ${{ secrets.GSHEET_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with: { python-version: '3.10' }
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run Scraper (Link Collection)
+        run: python scraper.py
+      - name: Run Reader (Sync & Text Extraction)
+        run: python reader.py
