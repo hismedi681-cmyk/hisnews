@@ -1,7 +1,11 @@
-name: Manual News Scrape Test
+name: News Scraper Auto Run
 
 on:
-  workflow_dispatch: # 이 설정이 있어야 GitHub 웹사이트에서 'Run' 버튼이 생깁니다.
+  schedule:
+    # 4시간마다 한 번씩 실행 (UTC 기준 0, 4, 8, 12, 16, 20시)
+    # 한국 시간(KST) 기준: 09:00, 13:00, 17:00, 21:00, 01:00, 05:00
+    - cron: '0 */4 * * *'
+  workflow_dispatch: # 수동 실행 버튼 유지
 
 jobs:
   scrape:
@@ -21,7 +25,6 @@ jobs:
 
       - name: Run Scraper
         env:
-          # GitHub Secrets에 등록할 변수명과 일치해야 합니다.
           GSHEET_ID: ${{ secrets.GSHEET_ID }}
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: python -m news.scraper
