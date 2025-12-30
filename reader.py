@@ -9,7 +9,7 @@ sa_info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"))
 creds = service_account.Credentials.from_service_account_info(sa_info)
 client = bigquery.Client(credentials=creds, project=sa_info['project_id'])
 
-PROJECT_ID = sa_info['project_id']
+PROJECT_ID = sa_info['topological-info-dynamics']
 DATASET = "kinetic_field"
 
 def run_pipeline():
@@ -43,4 +43,5 @@ def run_pipeline():
             print(f"❌ 에러: {row.url} - {e}")
 
 if __name__ == "__main__":
+
     run_pipeline()
