@@ -1,22 +1,26 @@
+# reader.py
 import os
 import json
 from google.cloud import bigquery
-import trafilatura
 from google.oauth2 import service_account
 
-# 1. 환경 변수에서 설정값 로드
-# YAML의 env 섹션에 정의된 이름과 정확히 일치해야 합니다.
+# 1. 환경 변수 로드
 target_project_id = os.getenv("BQ_PROJECT_ID")
 sa_json_str = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
 
-if not target_project_id or not sa_json_str:
-    raise ValueError("❌ 환경 변수(BQ_PROJECT_ID 또는 GOOGLE_SERVICE_ACCOUNT_JSON)가 설정되지 않았습니다.")
+# 2. 인증 설정 시 'Scopes' 추가 (빅쿼리가 시트를 읽기 위한 필수 단계)
+scopes = [
+    "https://www.googleapis.com/auth/cloud-platform",
+    "https://www.googleapis.com/auth/drive", # 빅쿼리가 외부 시트에 접근하기 위해 필요
+]
 
-# 2. 인증 및 클라이언트 설정
 sa_info = json.loads(sa_json_str)
-creds = service_account.Credentials.from_service_account_info(sa_info)
+creds = service_account.Credentials.from_service_account_info(
+    sa_info, 
+    scopes=scopes
+)
 
-# ★ 핵심: 인증 정보가 어떤 프로젝트 것이든, 실제 작업은 target_project_id에서 수행합니다.
+# 3. 클라이언트 생성
 client = bigquery.Client(credentials=creds, project=target_project_id)
 
 DATASET = "kinetic_field"
@@ -56,3 +60,4 @@ def run_pipeline():
 
 if __name__ == "__main__":
     run_pipeline()
+
