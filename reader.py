@@ -1,6 +1,6 @@
-# reader.py
 import os
 import json
+import trafilatura  # <--- 이 줄이 반드시 있어야 합니다!
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
@@ -60,4 +60,5 @@ def run_pipeline():
 
 if __name__ == "__main__":
     run_pipeline()
+
 
