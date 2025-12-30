@@ -1,23 +1,31 @@
-name: TID_Daily_Pipeline
+name: TID Pipeline (Reader Only)
+
 on:
-  schedule:
-    - cron: '0 0 * * *' # 매일 자정 실행
-  workflow_dispatch:
+  workflow_dispatch: # 수동 실행 버튼 생성
 
 jobs:
-  run-tid:
+  run-reader:
     runs-on: ubuntu-latest
-    env:
-      GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-      GSHEET_ID: ${{ secrets.GSHEET_ID }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with: { python-version: '3.10' }
+        uses: uses/setup-python@v4
+        with:
+          python-version: '3.9'
+
       - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run Scraper (Link Collection)
-        run: python scraper.py
+        run: |
+          pip install google-cloud-bigquery trafilatura pandas
+
       - name: Run Reader (Sync & Text Extraction)
-        run: python reader.py
+        env:
+          # 1. 서비스 계정 JSON 인증 정보
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          # 2. 실제 빅쿼리 데이터가 들어있는 프로젝트 ID (필수!)
+          BQ_PROJECT_ID: ${{ secrets.BQ_PROJECT_ID }}
+        run: |
+          # scraper.py를 건너뛰고 바로 reader.py를 실행합니다.
+          python reader.py
