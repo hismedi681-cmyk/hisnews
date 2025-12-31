@@ -34,8 +34,9 @@ RESULT_TABLE = "fmo_final_analysis"
 # ------------------------------------------
 
 def analyze_article(article_text):
-    """이중나선 동역학 엔진 실행"""
-    model = GenerativeModel("gemini-1.5-pro")
+    """최신 Gemini 2.0 Flash 모델을 사용하여 엔진 실행"""
+    # [수정] 지원 중단된 1.5-pro 대신 2.0-flash 사용
+    model = GenerativeModel("gemini-2.0-flash")
     
     # engine_prompt.txt 로드 로직은 동일
     with open("engine_prompt.txt", "r", encoding="utf-8") as f:
