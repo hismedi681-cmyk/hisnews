@@ -28,12 +28,19 @@ RAW_TABLE = "raw_stream_native"
 RESULT_TABLE = "fmo_final_analysis"
 
 def clean_json_text(text):
-    """Gemini 답변에서 JSON 마크다운 태그(```json) 제거 및 순수 JSON 추출"""
-    # ```json ... ``` 패턴을 찾아 내부 텍스트만 추출
-    match = re.search(r'```json\s+(.*?)\s+```', text, re.DOTALL)
-    if match:
-        return match.group(1).strip()
-    return text.strip()
+    """Gemini 답변에서 순수 JSON 객체만 추출 (더 견고한 버전)"""
+    try:
+        # 1. 마크다운 태그 제거
+        cleaned = re.sub(r'```json\s?|```', '', text).strip()
+        
+        # 2. 첫 '{'와 마지막 '}' 사이의 내용만 추출하여 사족 제거
+        start_idx = cleaned.find('{')
+        end_idx = cleaned.rfind('}')
+        if start_idx != -1 and end_idx != -1:
+            cleaned = cleaned[start_idx:end_idx+1]
+        return cleaned
+    except Exception:
+        return text.strip()
 
 def analyze_article(article_text):
     """Gemini 2.5 Flash를 사용하여 맥락적 동역학 분석 수행"""
@@ -55,31 +62,24 @@ def analyze_article(article_text):
     return json.loads(cleaned_json)
 
 def insert_result(result, meta):
-    """
-    프롬프트의 상세 결과물에서 핵심 지표만 추출하여 
-    기존 테이블 구조(Schema)에 맞게 매핑합니다.
-    """
     table_id = f"{project_id}.{DATASET}.{RESULT_TABLE}"
     
-    # 상세 데이터 추출 경로 지정
     physics = result.get('physics_engine', {})
     narratives = result.get('fmo_output', {}).get('module_5_narratives', {})
     
     row = {
-        "analysis_id": str(uuid.uuid4()), # 필수 필드
+        "analysis_id": str(uuid.uuid4()),
         "title_hash": meta['title_hash'],
         "title": meta.get('title', 'Untitled'),
         "published_at": meta['published_at'].isoformat() if hasattr(meta['published_at'], 'isoformat') else meta['published_at'],
         "observed_at": datetime.datetime.now().isoformat(),
         
-        # 핵심 지표 매핑
         "delta_score": float(physics.get('module_1_delta', {}).get('kl_divergence', 0.0)),
         "phase": str(physics.get('module_3_phase', {}).get('current_phase', 'UNKNOWN')),
         
-        # [중요] 모든 상세 맥락(Torque, Energy 등)을 풍부하게 보존
-        "analysis_payload": result, 
+        # [수정 포인트] JSON 타입 컬럼 에러 방지를 위해 dumps 사용
+        "analysis_payload": json.dumps(result, ensure_ascii=False), 
         
-        # 내러티브 매핑 (필드명 불일치 해결)
         "strategic_narrative": {
             "primary": narratives.get("primary_narrative"),
             "counter": narratives.get("counter_narrative"),
@@ -87,6 +87,7 @@ def insert_result(result, meta):
         }
     }
     
+    # insert_rows_json은 리스트 형태의 행 데이터를 받습니다.
     return bq_client.insert_rows_json(table_id, [row])
 
 def run_analyzer():
