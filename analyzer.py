@@ -1,5 +1,6 @@
 import os
 import uuid
+import re
 import json
 import datetime
 from google.cloud import bigquery
