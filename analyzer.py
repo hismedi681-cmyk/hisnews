@@ -6,45 +6,39 @@ from google.oauth2 import service_account
 import vertexai
 from vertexai.generative_models import GenerativeModel, GenerationConfig
 
-# 1. 환경 변수 로드 (GitHub Secrets)
+# 1. 환경 변수 로드
 project_id = os.getenv("BQ_PROJECT_ID")
 sa_json_str = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
-location = os.getenv("GCP_LOCATION", "asia-northeast3")
+location = os.getenv("GCP_LOCATION", "asia-northeast3") # 서울 리전 유지
 
-# 2. 인증 설정 (메모리 내에서 처리)
-# 외부 시트를 읽지 않으므로 'cloud-platform' 스코프만으로 충분합니다.
+# 2. 인증 설정 (메모리 내 처리)
 scopes = ["https://www.googleapis.com/auth/cloud-platform"]
 sa_info = json.loads(sa_json_str)
 creds = service_account.Credentials.from_service_account_info(sa_info, scopes=scopes)
 
-# 3. 각 서비스 초기화 (인증 객체 주입)
-# BigQuery 클라이언트 생성
+# 3. 서비스 초기화
 bq_client = bigquery.Client(credentials=creds, project=project_id)
-
-# Vertex AI 초기화 (인증 객체 전달)
 vertexai.init(project=project_id, location=location, credentials=creds)
 
 # [설정 정보]
-DATASET = "kinetic_field" # reader.py 예시와 맞춤
+DATASET = "kinetic_field"
 RAW_TABLE = "raw_stream_native"
 RESULT_TABLE = "fmo_final_analysis"
 
-# ------------------------------------------
-# 분석 및 삽입 함수들 (이전과 로직은 동일하나 bq_client를 사용)
-# ------------------------------------------
-
 def analyze_article(article_text):
-    """최신 Gemini 2.0 Flash 모델을 사용하여 엔진 실행"""
-    # [수정] 지원 중단된 1.5-pro 대신 2.0-flash 사용
-    model = GenerativeModel("gemini-2.0-flash")
+    """최신 Gemini 2.5 Flash 모델을 사용하여 엔진 실행"""
+    # [수정] 사용자님이 확인하신 gemini-2.5-flash 모델 적용
+    model = GenerativeModel("gemini-2.5-flash") 
     
-    # engine_prompt.txt 로드 로직은 동일
     with open("engine_prompt.txt", "r", encoding="utf-8") as f:
         system_instruction = f.read()
     
-    config = GenerationConfig(temperature=0.1, response_mime_type="application/json")
-    prompt = f"{system_instruction}\n\n[기사]:\n{article_text}"
+    config = GenerationConfig(
+        temperature=0.1, 
+        response_mime_type="application/json"
+    )
     
+    prompt = f"{system_instruction}\n\n[기사]:\n{article_text}"
     response = model.generate_content(prompt, generation_config=config)
     return json.loads(response.text)
 
