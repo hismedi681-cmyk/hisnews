@@ -100,7 +100,7 @@ def run_analyzer():
         WHERE res.title_hash = raw.title_hash
     )
     AND article_text IS NOT NULL
-    ORDER BY published_at DESC LIMIT 5
+    ORDER BY published_at DESC LIMIT 50
     """
     
     rows = bq_client.query(query).result()
