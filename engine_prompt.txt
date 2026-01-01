@@ -41,6 +41,7 @@
 - 결과는 반드시 아래에 지정된 JSON 구조를 따르라.
 - [내러티브 변환 규칙]: strategic_narratives 작성 시 절대로 과학적 용어(Delta, TICR, EPP 등)를 사용하지 마라.
 - 대신 '경영 리스크', '정책적 경직성', '사회적 여론', '인력 이탈', '의료계 갈등' 등 인간의 전략적 언어로 기술하라.
+- 주의: 모든 narratives 및 strategic_synthesis 필드는 반드시 한국어로만 작성해야 합니다."
 
 # [Output JSON Schema]
 {
